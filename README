@@ -1,0 +1,8 @@
+A simple setup for writing Game of life katas in several
+languages. First trial with Docker.
+
+Build a docker image from the Dockerfile to setup the environment.
+Run the image from repo top with:
+docker run -v $(pwd)/coderetreat:/coderetreat -it coderetreat
+
+From inside the container use the run scripts to start the codersdojo script for each language. 
