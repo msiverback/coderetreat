@@ -2,7 +2,7 @@ FROM ubuntu
 RUN apt-get update
 #install git
 RUN apt-get install -y git
-
+RUN apt-get install -y apt-utils
 run apt-get install -y tree
 
 #install emacs
@@ -24,8 +24,13 @@ RUN apt-get install -y libcunit1 libcunit1-doc libcunit1-dev
 #install java
 RUN apt-get install -y default-jdk
 
+
 # setting up the dojo
 RUN mkdir /coderetreat
 ADD . /coderetreat
 WORKDIR /coderetreat
+
+#install haskell
+RUN apt-get install -y curl
+RUN curl -sSL https://get.haskellstack.org/ | sh
 
