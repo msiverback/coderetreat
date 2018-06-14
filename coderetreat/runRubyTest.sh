@@ -5,4 +5,10 @@ framework: ruby.rspec
 source_files: .*\.rb
 EOF
 
-codersdojo start rspec
+cat <<EOF > runTestOnce.sh
+rspec rubyPractice/test/testGameOfLife.rb
+EOF
+
+chmod a+x runTestOnce.sh
+
+codersdojo start runTestOnce.sh
