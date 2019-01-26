@@ -6,7 +6,7 @@ ValidLanguagesKeys = [:java, :c, :python, :ruby]
 DirectorySuffix = "Practice"
 TestFilePrefix = "run"
 TestFileSuffix = "Test.sh"
-GameOfLifePattern = "gameOfLife"
+originalTestCasePattern = "gameOfLife"
 
 class CreateKataOptionParser
   def self.parse(args)
@@ -52,11 +52,20 @@ end
 options = CreateKataOptionParser.parse(ARGV)
 sourceDir = options[:language].to_s + DirectorySuffix
 destinationDir = options[:language].to_s + options[:className].capitalize + DirectorySuffix
-puts "Copying " + sourceDir + " to " + destinationDir if options[:verbose]
-FileUtils.copy_entry(sourceDir, destinationDir)
+if options[:language].to_s == "java"
+  FileUtils.mkdir(destinationDir)
+  FileUtils.chdir(destinationDir)
+  `gradle init --type java-library`
+  FileUtils.chdir("..")
+  destinationDir += "/src"
+  originalTestCasePattern = "Library"
+else
+  puts "Copying " + sourceDir + " to " + destinationDir if options[:verbose]
+  FileUtils.copy_entry(sourceDir, destinationDir)
+end
 Dir.glob(destinationDir + "/**/*").each do |fileName|
-  next unless fileName =~ /#{GameOfLifePattern}/i
-  newFileName = fileName.sub(/#{GameOfLifePattern}/i, options[:className])
+  next unless fileName =~ /#{originalTestCasePattern}/i
+  newFileName = fileName.sub(/#{originalTestCasePattern}/i, options[:className])
   FileUtils.mv(fileName, newFileName, verbose: options[:verbose])
 end
 
@@ -64,7 +73,7 @@ Dir.glob(destinationDir + "/**/*").each do |fileName|
   next unless File.file?(fileName)
   puts "replacing kata name #{options[:className]} in #{fileName}" if options[:verbose]
   fileText = File.read(fileName)
-  updatedFileText = fileText.gsub(/#{GameOfLifePattern}/i, options[:className])
+  updatedFileText = fileText.gsub(/#{originalTestCasePattern}/i, options[:className])
   updatedFileText = updatedFileText.gsub(sourceDir, destinationDir)
   File.open(fileName, "w") do |file|
     file.write(updatedFileText)
@@ -72,16 +81,18 @@ Dir.glob(destinationDir + "/**/*").each do |fileName|
 end
 FileUtils.chmod_R("u+rwx", destinationDir)
 
-runFileSrc = TestFilePrefix + options[:language].to_s.capitalize
-runFileSrc += TestFileSuffix
-runFileDest = TestFilePrefix + options[:language].to_s.capitalize
-runFileDest += options[:className].to_s + TestFileSuffix
-puts "Copying " + runFileSrc + " to " + runFileDest if options[:verbose]
-FileUtils.copy_entry(runFileSrc, runFileDest)
-fileText = File.read(runFileDest)
-updatedFileText = fileText.gsub(/#{GameOfLifePattern}/i, options[:className])
-updatedFileText = updatedFileText.gsub(sourceDir, destinationDir)
-File.open(runFileDest, "w") do |file|
-  file.write(updatedFileText)
+unless options[:language].to_s == "java"
+  runFileSrc = TestFilePrefix + options[:language].to_s.capitalize
+  runFileSrc += TestFileSuffix
+  runFileDest = TestFilePrefix + options[:language].to_s.capitalize
+  runFileDest += options[:className].to_s + TestFileSuffix
+  puts "Copying " + runFileSrc + " to " + runFileDest if options[:verbose]
+  FileUtils.copy_entry(runFileSrc, runFileDest)
+  fileText = File.read(runFileDest)
+  updatedFileText = fileText.gsub(/#{originalTestCasePattern}/i, options[:className])
+  updatedFileText = updatedFileText.gsub(sourceDir, destinationDir)
+  File.open(runFileDest, "w") do |file|
+    file.write(updatedFileText)
+  end
+  FileUtils.chmod("u+rwx", runFileDest)
 end
-FileUtils.chmod("u+rwx", runFileDest)

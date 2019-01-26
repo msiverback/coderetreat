@@ -22,8 +22,38 @@ RUN apt-get install -y gcc
 RUN apt-get install -y libcunit1 libcunit1-doc libcunit1-dev
 
 #install java
-RUN apt-get install -y default-jdk
+# Install OpenJDK-8
+RUN apt-get update && \
+    apt-get install -y openjdk-8-jdk && \
+    apt-get install -y ant && \
+    apt-get clean;
 
+# Fix certificate issues
+RUN apt-get update && \
+    apt-get install ca-certificates-java && \
+    apt-get clean && \
+    update-ca-certificates -f;
+
+# Setup JAVA_HOME -- useful for docker commandline
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+RUN export JAVA_HOME
+
+RUN apt-get install -y curl
+
+# Allow the host to use gradle cache, otherwise gradle will always download plugins & artifacts on every build
+VOLUME ["/root/.gradle/caches/"]
+
+# Download and install Gradle
+RUN \
+    cd /usr/local && \
+    curl -L https://services.gradle.org/distributions/gradle-2.5-bin.zip -o gradle-2.5-bin.zip && \
+    unzip gradle-2.5-bin.zip && \
+    rm gradle-2.5-bin.zip
+
+# Export some environment variables
+ENV GRADLE_USER_HOME=./.gradle/
+ENV GRADLE_HOME=/usr/local/gradle-2.5
+ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # setting up the dojo
 RUN mkdir /coderetreat
@@ -31,6 +61,6 @@ ADD . /coderetreat
 WORKDIR /coderetreat
 
 #install haskell
-RUN apt-get install -y curl
 RUN curl -sSL https://get.haskellstack.org/ | sh
 
+CMD ["bash"]
